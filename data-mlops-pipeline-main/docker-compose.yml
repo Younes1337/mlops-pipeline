@@ -1,0 +1,38 @@
+version: '3.3'
+
+services:
+  dagster:
+    image: registry.gitlab.com/pfe20243/data-mlops-pipeline:b37a37a283773509151d20addaa377d718523b2a
+    ports:
+      - "127.0.0.1:4000:4000" 
+    volumes:
+      - /opt/Dagster/project-dagster-project/dagster_project:/opt/Dagster/project-dagster-project/dagster_project
+    command: dagster dev -h 0.0.0.0 -p 4000  
+    networks:
+      - test_network
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - test_network
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+    networks:
+      - test_network
+
+networks:
+  test_network:
+    driver: bridge
